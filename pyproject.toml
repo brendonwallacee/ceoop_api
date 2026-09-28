@@ -2,27 +2,18 @@
 name = "ceoop"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "Brendon Wallace",email = "brendonwallace2001@gmail.com"}
-]
+authors = [{ name = "Brendon Wallace", email = "brendonwallace2001@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.14, <4.0"
-dependencies = [
-    "fastapi[standard] (>=0.141.1,<0.142.0)"
-]
-
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+dependencies = ["fastapi[standard] (>=0.141.1,<0.142.0)"]
 
 [dependency-groups]
 dev = [
-    "pytest (>=9.1.1,<10.0.0)",
-    "pytest-cov (>=7.1.0,<8.0.0)",
-    "ruff (>=0.16.9,<0.17.0)",
-    "typos (>=1.50.3,<2.0.0)",
-    "httpx2 (>=2.13.1,<3.0.0)"
+  "pytest (>=9.1.1,<10.0.0)",
+  "pytest-cov (>=7.1.0,<8.0.0)",
+  "ruff (>=0.16.9,<0.17.0)",
+  "typos (>=1.50.3,<2.0.0)",
+  "httpx2 (>=2.13.1,<3.0.0)",
 ]
 
 [tool.ruff]
@@ -41,21 +32,28 @@ quote-style = 'single'
 pythonpath = ['.']
 addopts = ['-p', 'no:warnings', '--cov=ceoop', '--cov-context=test']
 
-[tool.typos.files]
-extend-exclude = ["*.md", "migrations"]
-
-[tool.poe] 
-poetry_command = ""
-
 [tool.poe.tasks]
-lint = { cmd = "ruff check" }
+lint.sequence = [{ cmd = "typos" }, { cmd = "ruff check" }]
 format.sequence = [
+  { cmd = "typos --write-changes" },
   { cmd = "ruff check --fix" },
   { cmd = "ruff format" },
 ]
-serve = "fastapi dev fast_zero/app.py"
+serve = "fastapi dev ceoop/app.py"
 test.sequence = [
   "lint",
   { cmd = "pytest -s -x -vv $POE_EXTRA_ARGS" },
   { cmd = "coverage html --show-contexts" },
+  { cmd = "start htmlcov/index.html" },
 ]
+
+[tool.poe]
+poetry_command = ""
+
+[tool.typos.files]
+extend-exclude = ["*.md", "migrations"]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
