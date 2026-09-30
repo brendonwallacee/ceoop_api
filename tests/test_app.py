@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from ceoop.schemas import UserPublic
+
 
 def test_root_deve_retornar_ok_e_ola_mundo(client):
 
@@ -18,7 +20,6 @@ def test_html_deve_retornar_ok_e_html(client):
 
 
 def test_create_user(client):
-
     response = client.post(
         '/users/',
         json={
@@ -38,18 +39,16 @@ def test_create_user(client):
 def test_read_users(client):
     response = client.get('/users/')
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'users': [
-            {
-                'name': 'Brendon',
-                'username': 'brendonwallacee',
-                'id': 1,
-            }
-        ]
-    }
+    assert response.json() == {'users': []}
 
 
-def test_update_user(client):
+def test_read_users_with_users(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
+    response = client.get('/users/')
+    assert response.json() == {'users': [user_schema]}
+
+
+def test_update_user(client, user):
     response = client.put(
         '/users/1',
         json={
@@ -66,18 +65,40 @@ def test_update_user(client):
     }
 
 
-def test_get_user(client):
-    response = client.get('/users/1')
+def test_update_integrity_error(client, user):
+    client.post(
+        '/users',
+        json={
+            'name': 'fausto',
+            'username': 'faustoduno',
+            'password': 'secret',
+        },
+    )
+
+    response_update = client.put(
+        f'/users/{user.id}',
+        json={
+            'name': 'fausto',
+            'username': 'faustoduno',
+            'password': 'mynewpassword',
+        },
+    )
+    assert response_update.status_code == HTTPStatus.CONFLICT
+    assert response_update.json() == {'detail': 'Usuário já existe'}
+
+
+def test_get_user(client, user):
+    response = client.get(f'/users/{user.id}')
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        'name': 'Ana',
-        'username': 'annavelloso',
-        'id': 1,
+        'name': user.name,
+        'username': user.username,
+        'id': user.id,
     }
 
 
-def test_delete_user(client):
+def test_delete_user(client, user):
     response = client.delete('/users/1')
 
     assert response.status_code == HTTPStatus.OK
@@ -109,3 +130,16 @@ def test_get_user_should_return_not_found(client):
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Usuário não encontrado'}
+
+
+def test_create_user_should_return_409_username_exists(client, user):
+    response = client.post(
+        '/users/',
+        json={
+            'name': 'Brendon',
+            'username': user.username,
+            'password': 'secret',
+        },
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Usuário já existe'}

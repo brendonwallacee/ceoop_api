@@ -31,7 +31,7 @@ quote-style = 'single'
 
 [tool.pytest]
 pythonpath = ['.']
-addopts = ['-p', 'no:warnings', '--cov=ceoop', '--cov-context=test']
+addopts = ['-p', 'no:warnings', '--cov=ceoop', '--cov-context=test', '--cov-branch', '--random-order']
 
 [tool.poe.tasks]
 lint.sequence = [{ cmd = "typos" }, { cmd = "ruff check" }]
